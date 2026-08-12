@@ -8,13 +8,12 @@ head_radius_front = head_diameter_front / 2;
 head_radius_rear = head_diameter_rear / 2;
 edge_round = 1.2;
 
-// Rounded bullet nose
-nose_length = 15;  // Length of rounded nose section
-nose_tip_radius = 2;  // Radius of rounded tip
+// Rounded nose tip
+nose_length = 12;  // Length of rounded nose section
 
 // Cup dish nose - at the tip
-cup_diameter = 14;
-cup_depth = 4;
+cup_diameter = 12;
+cup_depth = 3;
 
 // Skirt collar
 collar_length = 24;
@@ -38,7 +37,7 @@ eye_surface_offset = 12.5;
 jet_exit_x = 70;
 jet_exit_y = 10.25;
 jet_exit_z = 3.75;
-jet_entry_offset = 4.25;
+jet_entry_offset = 3;
 
 function hex_points(radius) = [
     for (i = [0:5]) [radius * cos(60 * i + 30), radius * sin(60 * i + 30)]
@@ -49,40 +48,26 @@ module rounded_hex_profile(radius, roundover) {
         polygon(points = hex_points(radius - roundover));
 }
 
-module rounded_nose_section() {
-    // Rounded bullet nose that connects to hexagonal body
-    hull() {
-        // Rounded tip
-        translate([-nose_length, 0, 0])
-            sphere(r = nose_tip_radius);
-        
-        // Connection to hex body at z=0
-        rotate([0, 0, 90])
-            rotate([90, 0, 0])
-                linear_extrude(height = 0.1)
-                    rounded_hex_profile(head_radius_front, edge_round);
-    }
-}
-
 module body_blank() {
-    union() {
-        // Rounded nose section
-        rounded_nose_section();
+    // Create rounded nose tip + tapered hex body as one piece using hull
+    hull() {
+        // Rounded tip at front
+        translate([-nose_length, 0, 0])
+            sphere(r = head_radius_front * 0.6);
         
-        // Tapered hexagonal body
-        hull() {
-            translate([0, 0, 0])
-                rotate([0, 0, 90])
-                    rotate([90, 0, 0])
-                        linear_extrude(height = 0.1)
-                            rounded_hex_profile(head_radius_front, edge_round);
-            
-            translate([head_length, 0, 0])
-                rotate([0, 0, 90])
-                    rotate([90, 0, 0])
-                        linear_extrude(height = 0.1)
-                            rounded_hex_profile(head_radius_rear, edge_round);
-        }
+        // Front hex section
+        translate([0, 0, 0])
+            rotate([0, 0, 90])
+                rotate([90, 0, 0])
+                    linear_extrude(height = 0.1)
+                        rounded_hex_profile(head_radius_front, edge_round);
+        
+        // Rear hex section (tapered)
+        translate([head_length, 0, 0])
+            rotate([0, 0, 90])
+                rotate([90, 0, 0])
+                    linear_extrude(height = 0.1)
+                        rounded_hex_profile(head_radius_rear, edge_round);
     }
 }
 
@@ -102,14 +87,14 @@ module collar_outer() {
 
 module cup_dish() {
     // Cup dish at the rounded nose tip
-    translate([-nose_length + 2, 0, 0])
+    translate([-nose_length, 0, 0])
         sphere(r = cup_diameter / 2);
 }
 
 module leader_bore() {
-    translate([-nose_length - 2, 0, 0])
+    translate([-nose_length - 5, 0, 0])
         rotate([0, 90, 0])
-            cylinder(h = head_length + nose_length + 2, d = leader_bore_diameter);
+            cylinder(h = head_length + nose_length + 5, d = leader_bore_diameter);
 }
 
 module skirt_pocket() {
@@ -140,10 +125,10 @@ module cylinder_between(p1, p2, diameter) {
 module jets() {
     // Jets originate from near the rounded nose tip
     jet_entries = [
-        [-nose_length + 3, jet_entry_offset, jet_entry_offset],
-        [-nose_length + 3, -jet_entry_offset, jet_entry_offset],
-        [-nose_length + 3, jet_entry_offset, -jet_entry_offset],
-        [-nose_length + 3, -jet_entry_offset, -jet_entry_offset]
+        [-nose_length + 2, jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2, -jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2, jet_entry_offset, -jet_entry_offset],
+        [-nose_length + 2, -jet_entry_offset, -jet_entry_offset]
     ];
 
     jet_exits = [
