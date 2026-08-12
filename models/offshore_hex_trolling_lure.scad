@@ -10,10 +10,11 @@ edge_round = 1.2;
 
 // Rounded nose tip
 nose_length = 12;  // Length of rounded nose section
+nose_tip_radius = head_radius_front * 0.6;
 
-// Cup dish nose - shallow but visible recess on the tip
-cup_diameter = 10;
-cup_depth = 3;  // Visible shallow recess
+// Cup dish nose - on the tip surface
+cup_diameter = 8;
+cup_depth = 2;  // Shallow but visible
 
 // Skirt collar
 collar_length = 24;
@@ -38,8 +39,8 @@ jet_exit_x = 70;
 jet_exit_y = 10.25;
 jet_exit_z = 3.75;
 jet_entry_offset = 3;
-jet_entrance_depth = 2.5;
-jet_entrance_diameter = 3.5;
+jet_entrance_depth = 3;
+jet_entrance_diameter = 3;
 
 function hex_points(radius) = [
     for (i = [0:5]) [radius * cos(60 * i + 30), radius * sin(60 * i + 30)]
@@ -55,7 +56,7 @@ module body_blank() {
     hull() {
         // Rounded tip at front
         translate([-nose_length, 0, 0])
-            sphere(r = head_radius_front * 0.6);
+            sphere(r = nose_tip_radius);
         
         // Front hex section
         translate([0, 0, 0])
@@ -88,9 +89,11 @@ module collar_outer() {
 }
 
 module cup_dish() {
-    // Visible cup dish on the nose tip - spherical recess
+    // Cup dish carved into the nose tip from the front
+    // Positioned at the very tip, going inward
     translate([-nose_length, 0, 0])
-        sphere(r = cup_diameter / 2);
+        translate([0, 0, 0])
+            sphere(r = cup_diameter / 2);
 }
 
 module leader_bore() {
@@ -125,12 +128,12 @@ module cylinder_between(p1, p2, diameter) {
 }
 
 module jets() {
-    // Jet entries on the nose, connecting to exits on the body
+    // Jet channels through the body
     jet_entries = [
-        [-nose_length + 2, jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, jet_entry_offset, -jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, -jet_entry_offset]
+        [-nose_length + 2.5, jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2.5, -jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2.5, jet_entry_offset, -jet_entry_offset],
+        [-nose_length + 2.5, -jet_entry_offset, -jet_entry_offset]
     ];
 
     jet_exits = [
@@ -146,12 +149,13 @@ module jets() {
 }
 
 module jet_entrances() {
-    // Larger, more visible cone-shaped entrances on the nose for the jets
+    // Cone-shaped entrances carved into the nose surface
+    // These go from the nose tip inward
     jet_entry_locations = [
-        [-nose_length + 0.5, jet_entry_offset, jet_entry_offset],
-        [-nose_length + 0.5, -jet_entry_offset, jet_entry_offset],
-        [-nose_length + 0.5, jet_entry_offset, -jet_entry_offset],
-        [-nose_length + 0.5, -jet_entry_offset, -jet_entry_offset]
+        [-nose_length, jet_entry_offset, jet_entry_offset],
+        [-nose_length, -jet_entry_offset, jet_entry_offset],
+        [-nose_length, jet_entry_offset, -jet_entry_offset],
+        [-nose_length, -jet_entry_offset, -jet_entry_offset]
     ];
     
     for (i = [0:3]) {
