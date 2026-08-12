@@ -11,9 +11,9 @@ edge_round = 1.2;
 // Rounded nose tip
 nose_length = 12;  // Length of rounded nose section
 
-// Cup dish nose - at the tip
-cup_diameter = 12;
-cup_depth = 3;
+// Cup dish nose - recessed into the nose
+cup_diameter = 10;
+cup_depth = 5;  // Deep recess
 
 // Skirt collar
 collar_length = 24;
@@ -86,8 +86,8 @@ module collar_outer() {
 }
 
 module cup_dish() {
-    // Cup dish at the rounded nose tip
-    translate([-nose_length, 0, 0])
+    // Deep cup dish recessed into the nose tip
+    translate([-nose_length + 1, 0, 0])
         sphere(r = cup_diameter / 2);
 }
 
@@ -123,12 +123,12 @@ module cylinder_between(p1, p2, diameter) {
 }
 
 module jets() {
-    // Jets originate from near the rounded nose tip
+    // Jet entries on the nose, connecting to exits on the body
     jet_entries = [
-        [-nose_length + 2, jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, jet_entry_offset, -jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, -jet_entry_offset]
+        [-nose_length + 3, jet_entry_offset, jet_entry_offset],
+        [-nose_length + 3, -jet_entry_offset, jet_entry_offset],
+        [-nose_length + 3, jet_entry_offset, -jet_entry_offset],
+        [-nose_length + 3, -jet_entry_offset, -jet_entry_offset]
     ];
 
     jet_exits = [
@@ -140,6 +140,21 @@ module jets() {
 
     for (i = [0:3]) {
         cylinder_between(jet_entries[i], jet_exits[i], jet_diameter);
+    }
+}
+
+module jet_entrances() {
+    // Small recessed entrances on the nose for the jets
+    jet_entry_locations = [
+        [-nose_length + 2, jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2, -jet_entry_offset, jet_entry_offset],
+        [-nose_length + 2, jet_entry_offset, -jet_entry_offset],
+        [-nose_length + 2, -jet_entry_offset, -jet_entry_offset]
+    ];
+    
+    for (i = [0:3]) {
+        translate(jet_entry_locations[i])
+            sphere(r = jet_diameter / 2 + 0.5);
     }
 }
 
@@ -155,4 +170,5 @@ difference() {
     skirt_pocket();
     eye_recesses();
     jets();
+    jet_entrances();
 }
