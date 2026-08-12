@@ -8,9 +8,11 @@ head_radius_front = head_diameter_front / 2;
 head_radius_rear = head_diameter_rear / 2;
 edge_round = 1.2;
 
+// Bullet nose - rounded dome
+nose_length = 20;  // Length of rounded nose section
+nose_radius = head_radius_front * 1.2;  // Sphere radius for dome
+
 // Cup dish nose
-nose_slant = 1.5;
-nose_face_angle = atan(nose_slant / head_diameter_front);
 cup_diameter = 18;
 cup_depth = 5;
 cup_radius = ((cup_diameter / 2) * (cup_diameter / 2) + cup_depth * cup_depth) / (2 * cup_depth);
@@ -43,65 +45,63 @@ function hex_points(radius) = [
     for (i = [0:5]) [radius * cos(60 * i + 30), radius * sin(60 * i + 30)]
 ];
 
-function nose_plane_x(z) = nose_slant / 2 - z * tan(nose_face_angle);
-
-function hex_radius_at(x) = head_radius_front - (x / head_length) * (head_radius_front - head_radius_rear);
+function hex_radius_at(x) = head_radius_front - (x / (head_length + nose_length)) * (head_radius_front - head_radius_rear);
 
 module rounded_hex_profile(radius, roundover) {
     offset(r = roundover)
         polygon(points = hex_points(radius - roundover));
 }
 
-module tapered_hex_body() {
-    rotate([0, 0, 90]) {
-        rotate([90, 0, 0]) {
-            // Create tapered hexagonal extrusion
-            for (i = [0 : 5]) {
-                step = head_length / 20;
-                for (j = [0 : 19]) {
-                    x_pos = j * step;
-                    x_next = (j + 1) * step;
-                    r_curr = hex_radius_at(x_pos);
-                    r_next = hex_radius_at(x_next);
-                    
-                    translate([0, 0, x_pos])
-                        linear_extrude(height = step)
-                            rounded_hex_profile(r_curr, edge_round);
-                }
-            }
-        }
+module bullet_nose() {
+    // Dome-shaped rounded nose
+    intersection() {
+        translate([0, 0, -nose_radius + nose_length])
+            sphere(r = nose_radius);
+        
+        // Constrain to nose length
+        translate([-50, -50, -nose_length])
+            cube([100, 100, nose_length]);
     }
 }
 
-module body_blank() {
-    // Simpler approach: use hull of hexagons at front and rear
+module hex_nose_transition() {
+    // Transition from round bullet to hexagonal body
     hull() {
-        translate([0, 0, 0])
+        translate([0, 0, -nose_length])
             rotate([0, 0, 90])
                 rotate([90, 0, 0])
                     linear_extrude(height = 0.1)
                         rounded_hex_profile(head_radius_front, edge_round);
         
-        translate([head_length, 0, 0])
-            rotate([0, 0, 90])
-                rotate([90, 0, 0])
-                    linear_extrude(height = 0.1)
-                        rounded_hex_profile(head_radius_rear, edge_round);
+        translate([0, 0, 0])
+            sphere(r = head_radius_front * 0.95);
     }
 }
 
-module front_trim() {
-    translate([nose_slant / 2, 0, 0])
-        rotate([0, nose_face_angle, 0])
-            translate([-120, -120, -120])
-                cube([120, 240, 240]);
+module body_blank() {
+    union() {
+        // Rounded bullet nose
+        bullet_nose();
+        
+        // Hexagonal body tapered from front to rear
+        hull() {
+            translate([0, 0, 0])
+                rotate([0, 0, 90])
+                    rotate([90, 0, 0])
+                        linear_extrude(height = 0.1)
+                            rounded_hex_profile(head_radius_front, edge_round);
+            
+            translate([head_length, 0, 0])
+                rotate([0, 0, 90])
+                    rotate([90, 0, 0])
+                        linear_extrude(height = 0.1)
+                            rounded_hex_profile(head_radius_rear, edge_round);
+        }
+    }
 }
 
 module head_outer() {
-    difference() {
-        body_blank();
-        front_trim();
-    }
+    body_blank();
 }
 
 module collar_outer() {
@@ -115,16 +115,15 @@ module collar_outer() {
 }
 
 module cup_dish() {
-    translate([nose_slant / 2, 0, 0])
-        rotate([0, nose_face_angle, 0])
-            translate([cup_radius - cup_depth, 0, 0])
-                sphere(r = cup_radius);
+    // Cup dish centered on the rounded nose tip
+    translate([0, 0, nose_length - cup_depth / 2])
+        sphere(r = cup_radius * 0.8);
 }
 
 module leader_bore() {
-    translate([-2, 0, 0])
+    translate([-nose_length, 0, 0])
         rotate([0, 90, 0])
-            cylinder(h = head_length - skirt_pocket_extension + 2, d = leader_bore_diameter);
+            cylinder(h = head_length + nose_length - skirt_pocket_extension + 2, d = leader_bore_diameter);
 }
 
 module skirt_pocket() {
@@ -154,10 +153,10 @@ module cylinder_between(p1, p2, diameter) {
 
 module jets() {
     jet_entries = [
-        [nose_plane_x(jet_entry_offset) + 0.2, jet_entry_offset, jet_entry_offset],
-        [nose_plane_x(jet_entry_offset) + 0.2, -jet_entry_offset, jet_entry_offset],
-        [nose_plane_x(-jet_entry_offset) + 0.2, jet_entry_offset, -jet_entry_offset],
-        [nose_plane_x(-jet_entry_offset) + 0.2, -jet_entry_offset, -jet_entry_offset]
+        [5, jet_entry_offset, jet_entry_offset],
+        [5, -jet_entry_offset, jet_entry_offset],
+        [5, jet_entry_offset, -jet_entry_offset],
+        [5, -jet_entry_offset, -jet_entry_offset]
     ];
 
     jet_exits = [
