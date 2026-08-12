@@ -8,14 +8,13 @@ head_radius_front = head_diameter_front / 2;
 head_radius_rear = head_diameter_rear / 2;
 edge_round = 1.2;
 
-// Bullet nose - rounded dome
-nose_length = 20;  // Length of rounded nose section
-nose_radius = head_radius_front * 1.2;  // Sphere radius for dome
+// Bullet nose - pointed cone
+nose_length = 20;  // Length of pointed nose cone
 
-// Cup dish nose
-cup_diameter = 18;
-cup_depth = 5;
-cup_radius = ((cup_diameter / 2) * (cup_diameter / 2) + cup_depth * cup_depth) / (2 * cup_depth);
+// Cup dish nose - recessed into the body
+cup_diameter = 12;
+cup_depth = 3;
+cup_offset_from_tip = 15;  // How far down from nose tip the cup starts
 
 // Skirt collar
 collar_length = 24;
@@ -45,43 +44,21 @@ function hex_points(radius) = [
     for (i = [0:5]) [radius * cos(60 * i + 30), radius * sin(60 * i + 30)]
 ];
 
-function hex_radius_at(x) = head_radius_front - (x / (head_length + nose_length)) * (head_radius_front - head_radius_rear);
-
 module rounded_hex_profile(radius, roundover) {
     offset(r = roundover)
         polygon(points = hex_points(radius - roundover));
 }
 
-module bullet_nose() {
-    // Dome-shaped rounded nose
-    intersection() {
-        translate([0, 0, -nose_radius + nose_length])
-            sphere(r = nose_radius);
-        
-        // Constrain to nose length
-        translate([-50, -50, -nose_length])
-            cube([100, 100, nose_length]);
-    }
-}
-
-module hex_nose_transition() {
-    // Transition from round bullet to hexagonal body
-    hull() {
-        translate([0, 0, -nose_length])
-            rotate([0, 0, 90])
-                rotate([90, 0, 0])
-                    linear_extrude(height = 0.1)
-                        rounded_hex_profile(head_radius_front, edge_round);
-        
-        translate([0, 0, 0])
-            sphere(r = head_radius_front * 0.95);
-    }
+module pointed_cone_nose() {
+    // Pointed cone at the tip
+    translate([0, 0, -nose_length])
+        cylinder(h = nose_length, r1 = head_radius_front, r2 = 0, $fn = 96);
 }
 
 module body_blank() {
     union() {
-        // Rounded bullet nose
-        bullet_nose();
+        // Pointed cone nose
+        pointed_cone_nose();
         
         // Hexagonal body tapered from front to rear
         hull() {
@@ -115,9 +92,9 @@ module collar_outer() {
 }
 
 module cup_dish() {
-    // Cup dish centered on the rounded nose tip
-    translate([0, 0, nose_length - cup_depth / 2])
-        sphere(r = cup_radius * 0.8);
+    // Cup dish recessed into the body, partway down from the nose tip
+    translate([0, 0, -cup_offset_from_tip])
+        sphere(r = cup_diameter / 2);
 }
 
 module leader_bore() {
