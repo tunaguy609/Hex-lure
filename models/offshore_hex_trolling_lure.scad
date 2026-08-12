@@ -11,9 +11,9 @@ edge_round = 1.2;
 // Rounded nose tip
 nose_length = 12;  // Length of rounded nose section
 
-// Cup dish nose - recessed into the nose
-cup_diameter = 10;
-cup_depth = 5;  // Deep recess
+// Cup dish nose - shallow recess on the tip
+cup_diameter = 8;
+cup_depth = 2;  // Shallow recess
 
 // Skirt collar
 collar_length = 24;
@@ -38,6 +38,7 @@ jet_exit_x = 70;
 jet_exit_y = 10.25;
 jet_exit_z = 3.75;
 jet_entry_offset = 3;
+jet_entrance_depth = 1.5;
 
 function hex_points(radius) = [
     for (i = [0:5]) [radius * cos(60 * i + 30), radius * sin(60 * i + 30)]
@@ -86,8 +87,8 @@ module collar_outer() {
 }
 
 module cup_dish() {
-    // Deep cup dish recessed into the nose tip
-    translate([-nose_length + 1, 0, 0])
+    // Shallow cup dish on the nose tip surface
+    translate([-nose_length + 0.5, 0, 0])
         sphere(r = cup_diameter / 2);
 }
 
@@ -144,18 +145,22 @@ module jets() {
 }
 
 module jet_entrances() {
-    // Small recessed entrances on the nose for the jets
+    // Recessed cone-shaped entrances on the nose for the jets
     jet_entry_locations = [
-        [-nose_length + 2, jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, jet_entry_offset],
-        [-nose_length + 2, jet_entry_offset, -jet_entry_offset],
-        [-nose_length + 2, -jet_entry_offset, -jet_entry_offset]
+        [-nose_length + 1, jet_entry_offset, jet_entry_offset],
+        [-nose_length + 1, -jet_entry_offset, jet_entry_offset],
+        [-nose_length + 1, jet_entry_offset, -jet_entry_offset],
+        [-nose_length + 1, -jet_entry_offset, -jet_entry_offset]
     ];
     
     for (i = [0:3]) {
         translate(jet_entry_locations[i])
-            sphere(r = jet_diameter / 2 + 0.5);
+            cone(h = jet_entrance_depth, r1 = jet_diameter / 2 + 0.3, r2 = 0);
     }
+}
+
+module cone(h, r1, r2) {
+    cylinder(h = h, r1 = r1, r2 = r2, $fn = 32);
 }
 
 // Main lure
